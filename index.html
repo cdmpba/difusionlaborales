@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Difusión de búsquedas laborales | MPBA</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔵</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --azul:#193B57; --texto:#243645; --texto2:#647687; --fondo:#F5F7F9; --borde:#DCE4EB;
+    --campo:#CAD5DE; --enlace:#155C8C; --exito:#1C8053; --error:#A03434; --acento:#29A8E0;
+    --font:"Google Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--fondo);color:var(--texto);font:15px/1.5 var(--font)}
+  button,input,select{font:inherit;color:inherit}
+  :focus-visible{outline:3px solid var(--acento);outline-offset:2px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* Encabezado */
+  header{background:linear-gradient(135deg,var(--azul),var(--enlace));color:#fff;border-bottom:4px solid var(--acento)}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+  .head{display:flex;align-items:center;gap:16px;padding:20px 16px}
+  .head img{height:40px;width:auto;display:block}
+  .head .sep{width:1px;align-self:stretch;background:rgba(255,255,255,.35)}
+  .head .etq{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.85;margin:0}
+  .head h1{margin:2px 0 0;font-size:23px;font-weight:800;line-height:1.2}
+
+  /* Navegación */
+  nav{position:sticky;top:0;z-index:5;background:var(--fondo);border-bottom:1px solid var(--borde)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px}
+  .tab{min-height:44px;border:1px solid var(--campo);background:#fff;color:var(--azul);border-radius:12px;
+       font-weight:700;cursor:pointer;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:8px;
+       transition:background .2s,color .2s}
+  .tab .n{font-weight:500;font-size:13px;color:var(--texto2)}
+  .tab[aria-pressed="true"]{background:var(--azul);color:#fff;border-color:var(--azul)}
+  .tab[aria-pressed="true"] .n{color:#cfe3f2}
+
+  main{padding:20px 0 48px}
+  .barra{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+  .buscar{flex:1 1 320px}
+  label{display:block;font-size:13px;font-weight:700;color:var(--texto);margin-bottom:4px}
+  input[type=search],input[type=text],input[type=email],input[type=password],select{
+    width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--campo);border-radius:8px;background:#fff}
+  .btn{min-height:44px;border-radius:12px;padding:8px 16px;font-weight:700;cursor:pointer;border:1px solid var(--campo);
+       background:#fff;color:var(--azul);transition:background .2s,color .2s,border-color .2s}
+  .btn:active{transform:scale(.98)}
+  .btn.primario{background:var(--azul);color:#fff;border-color:var(--azul)}
+  .btn.ok{background:var(--exito);border-color:var(--exito);color:#fff}
+
+  .estado{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:12px 0 0;font-size:13px;color:var(--texto2)}
+  .estado .punto{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--exito);margin-right:6px;vertical-align:1px}
+  .estado.aviso .punto{background:#B7791F}
+  .link{color:var(--enlace);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;font-size:13px}
+
+  /* Copia en bloque */
+  .bloque{background:#fff;border:1px solid var(--borde);border-radius:16px;padding:16px;margin:16px 0;
+          box-shadow:0 2px 8px rgba(25,59,87,.06)}
+  .bloque h2{font-size:16px;margin:0 0 4px}
+  .bloque p{margin:0 0 12px;font-size:13px;color:var(--texto2)}
+  .acciones{display:flex;flex-wrap:wrap;gap:8px}
+
+  .conteo{font-size:13px;color:var(--texto2);margin:16px 0 8px}
+
+  /* Tarjetas */
+  .lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;list-style:none;margin:0;padding:0}
+  .card{background:#fff;border:1px solid var(--borde);border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(25,59,87,.06);
+        display:flex;flex-direction:column;gap:12px}
+  .top{display:flex;gap:12px;align-items:flex-start}
+  .ini{flex:0 0 40px;height:40px;border-radius:50%;background:#E4EEF6;color:var(--azul);font-weight:800;font-size:14px;
+       display:flex;align-items:center;justify-content:center}
+  .card h3{font-size:15px;margin:0;line-height:1.35}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .pill{font-size:12px;border-radius:999px;padding:2px 10px;border:1px solid var(--borde);color:var(--texto2);background:var(--fondo)}
+  .pill.t-u{background:#E7F1FB;border-color:#C7DDF2;color:#1F4E79}
+  .pill.t-b{background:#EFEDFF;border-color:#D9D4FA;color:#4A3D99}
+  .pill.t-c{background:#E3F4F1;border-color:#C2E5DE;color:#1D5E52}
+  .perf{font-size:13px;color:var(--texto2);margin:0}
+  .dato{display:flex;align-items:center;gap:8px}
+  .dato .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+  .dato .v a{color:var(--enlace)}
+  .dato .v.vacio{color:var(--texto2);font-style:italic}
+  .dato .btn{min-height:40px;padding:6px 12px;font-size:13px;flex:0 0 auto}
+
+  .vacio-msg{background:#fff;border:1px dashed var(--campo);border-radius:16px;padding:24px;text-align:center;color:var(--texto2)}
+
+  footer{font-size:12px;color:var(--texto2);text-align:center;padding:24px 16px 40px}
+
+  /* Aviso flotante */
+  #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);opacity:0;pointer-events:none;
+         background:var(--texto);color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:20;
+         transition:opacity .25s,transform .25s;max-width:calc(100% - 32px)}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.err{background:var(--error)}
+
+  /* Modal */
+  dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100% - 24px));color:var(--texto)}
+  dialog::backdrop{background:rgba(36,54,69,.45)}
+  .m-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--borde)}
+  .m-head h2{margin:0;font-size:18px;color:var(--azul)}
+  .cerrar{width:44px;height:44px;border:0;background:none;font-size:24px;cursor:pointer;color:var(--texto2);border-radius:8px}
+  form .m-body{padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+  .full{grid-column:1/-1}
+  .ayuda{font-size:12px;color:var(--texto2);margin-top:4px}
+  .ayuda.err{color:var(--error)}
+  .m-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 20px}
+  .req{color:var(--error)}
+
+  @media (max-width:720px){
+    .tabs{grid-template-columns:1fr 1fr}
+    .head img{height:32px}
+    .head h1{font-size:20px}
+    .lista{grid-template-columns:1fr}
+    form .m-body{grid-template-columns:1fr}
+    .barra .btn{flex:1 1 100%}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head">
+    <img src="https://www.mpba.gov.ar/assets/images/logo2021w.png" alt="Ministerio Público de la Provincia de Buenos Aires" onerror="this.remove();document.querySelector('.head .sep')?.remove()">
+    <span class="sep" aria-hidden="true"></span>
+    <div>
+      <p class="etq">Comunicación Digital</p>
+      <h1>Difusión de búsquedas laborales</h1>
+    </div>
+  </div>
+</header>
+
+<nav aria-label="Tipo de contacto">
+  <div class="wrap tabs" id="tabs"></div>
+</nav>
+
+<main class="wrap">
+  <div class="barra">
+    <div class="buscar">
+      <label for="q">Buscar contacto</label>
+      <input type="search" id="q" autocomplete="off" placeholder="Nombre, usuario, correo, zona o carrera">
+    </div>
+    <button class="btn primario" id="btnNuevo" type="button">+ Agregar contacto</button>
+  </div>
+
+  <p class="estado" id="estado" role="status" aria-live="polite"><span id="estadoTxt">Cargando contactos…</span></p>
+
+  <section class="bloque" aria-labelledby="tBloque">
+    <h2 id="tBloque">Copiar en bloque</h2>
+    <p id="bloqueTxt">Copia los contactos que se ven en la lista, según la búsqueda y el tipo elegido.</p>
+    <div class="acciones" id="accionesBloque"></div>
+  </section>
+
+  <p class="conteo" id="conteo" aria-live="polite"></p>
+  <ul class="lista" id="lista"></ul>
+</main>
+
+<footer>
+  MPBA · Comunicación Digital · Difusión de búsquedas laborales · v1.0<br>
+  Los datos se toman de la planilla <a href="https://docs.google.com/spreadsheets/d/1ZUxtYuhoqupnnnF7Mrh2gxcjfcfznX2le4idZa1ZUuI/edit" target="_blank" rel="noopener">Difusión · Contactos</a>.
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlg" aria-labelledby="dlgTitulo">
+  <form id="form" novalidate>
+    <div class="m-head">
+      <h2 id="dlgTitulo">Agregar contacto</h2>
+      <button type="button" class="cerrar" id="btnCerrar" aria-label="Cerrar">×</button>
+    </div>
+    <div class="m-body">
+      <div class="full">
+        <label for="fInst">Institución <span class="req" aria-hidden="true">*</span></label>
+        <input type="text" id="fInst" name="institucion" required placeholder="Ej.: Colegio de Abogados de Morón">
+        <div class="ayuda err" id="eInst" hidden></div>
+      </div>
+      <div>
+        <label for="fTipo">Tipo <span class="req" aria-hidden="true">*</span></label>
+        <select id="fTipo" name="tipo"></select>
+      </div>
+      <div id="wOtro" hidden>
+        <label for="fOtro">Nuevo tipo</label>
+        <input type="text" id="fOtro" name="otro" placeholder="Ej.: Medio local">
+      </div>
+      <div>
+        <label for="fIg">Instagram</label>
+        <input type="text" id="fIg" name="instagram" autocomplete="off" placeholder="@usuario o link del perfil">
+        <div class="ayuda" id="eIg">Podés pegar el link del perfil.</div>
+      </div>
+      <div>
+        <label for="fMail">Correo</label>
+        <input type="email" id="fMail" name="mail" autocomplete="off" placeholder="nombre@dominio.org.ar">
+        <div class="ayuda err" id="eMail" hidden></div>
+      </div>
+      <div>
+        <label for="fZona">Zona</label>
+        <input type="text" id="fZona" name="zona" placeholder="Ej.: Mar del Plata">
+      </div>
+      <div class="full">
+        <label for="fPerf">Perfiles del concurso</label>
+        <input type="text" id="fPerf" name="perfiles" placeholder="Ej.: Abogacía, Informática">
+      </div>
+      <div class="full">
+        <label for="fClave">Clave de carga</label>
+        <input type="password" id="fClave" name="clave" autocomplete="current-password">
+        <div class="ayuda">Se guarda en este navegador para no pedirla otra vez.</div>
+      </div>
+      <div class="full ayuda err" id="eGeneral" hidden></div>
+    </div>
+    <div class="m-foot">
+      <button type="button" class="btn" id="btnCancelar">Cancelar</button>
+      <button type="submit" class="btn primario" id="btnGuardar">Guardar contacto</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/* ===== Configuración ===== */
+// Pegá acá la URL de la aplicación web de Apps Script (termina en /exec).
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbm9Dygj7D_A7RHYE4mdNEupVxDpeXQOZHvzKZnYyPuQyIAYR4dqe8k9GaSnlAlM4k/exec";
+// Planilla de respaldo para lectura si no hay SCRIPT_URL (debe estar compartida como "Cualquier persona con el enlace").
+const SHEET_ID = "1ZUxtYuhoqupnnnF7Mrh2gxcjfcfznX2le4idZa1ZUuI";
+const SHEET_NAME = "Contactos";
+const TIPOS_BASE = ["Universidad", "Bolsa de trabajo", "Colegio profesional"];
+const TOPE_IG = 20; // Instagram permite hasta 20 menciones por publicación.
+
+/* Lista guardada: se muestra si la planilla no responde. */
+const RESPALDO = [
+["UNLP - Universidad Nacional de La Plata","Universidad","difusion@info.unlp.edu.ar","@unlpoficial","La Plata","Medicina, Psicología, Derecho, Económicas, Informática, Química y más"],
+["UNMdP - Universidad Nacional de Mar del Plata","Universidad","extensionybienestarestudiantil.fh@mdp.edu.ar","@unmdp_oficial","Mar del Plata","Medicina, Psicología, Derecho, Económicas, Informática"],
+["UNS - Universidad Nacional del Sur","Universidad","prensa@uns.edu.ar","@unsbahiablanca","Bahía Blanca","Derecho, Económicas, Informática, Química, Salud"],
+["UNICEN - Universidad Nacional del Centro","Universidad","informes@rec.unicen.edu.ar","@unicen_oficial","Tandil, Azul, Olavarría","Derecho (sede Azul), Económicas, Informática, Salud"],
+["UNNOBA - Universidad Nacional del Noroeste","Universidad","extension@unnoba.edu.ar","@unnobanoticias","Junín, Pergamino","Derecho, Económicas, Informática"],
+["UNLu - Universidad Nacional de Luján","Universidad","informes@unlu.edu.ar","@unlu.oficial","Luján (zona Mercedes)","Económicas, Informática"],
+["UNLZ - Universidad Nacional de Lomas de Zamora","Universidad","info@unlz.edu.ar","@unlzoficial","Lomas de Zamora","Derecho, Económicas, Psicología, Informática"],
+["UBA - Universidad de Buenos Aires","Universidad","extension@economicas.uba.ar","@uba_ar","CABA","Todas las carreras del concurso"],
+["UTN - Rectorado","Universidad","sec-admin@utn.edu.ar","@utn.rec.ar","Nacional (regionales La Plata, Mar del Plata, Bahía Blanca)","Informática"],
+["IUPFA - Instituto Universitario de la Policía Federal","Universidad","informes@iupfa.edu.ar","@iupfa","CABA","Licenciatura en Criminalística"],
+["Facultad de Ciencias Económicas UNLP - Inserción Laboral","Bolsa de trabajo","insercionlaboral@econo.unlp.edu.ar","@insercionlaboral.fce.unlp","La Plata","Contadores, Administración"],
+["Facultad de Derecho UBA - Búsquedas laborales","Bolsa de trabajo","graduados@derecho.uba.ar","@fduba","CABA","Abogacía"],
+["UCALP - Desarrollo Profesional y Graduados","Bolsa de trabajo","graduados@ucalp.edu.ar","@graduadosucalp","La Plata, Bahía Blanca y otras sedes","Varias carreras"],
+["Empleo - Municipalidad de Bahía Blanca","Bolsa de trabajo","","@emplesobahiablanca","Bahía Blanca","Todos los perfiles"],
+["La Plata Trabaja","Bolsa de trabajo","trabajalaplata@gmail.com","@laplatatrabaja","La Plata","Todos los perfiles"],
+["Oficina de Empleo Tandil","Bolsa de trabajo","empleo@tandil.gov.ar","@oficinadeempleotandil","Tandil.","Todos los perfiles"],
+["COLPROBA - Colegio de Abogados de la Provincia","Colegio profesional","prensa@colproba.org.ar","@colproba","Provincia","Abogacía (detectives)"],
+["CALP - Colegio de la Abogacía de La Plata","Colegio profesional","info@calp.org.ar","@calp_oficial","La Plata","Abogacía"],
+["CALZ - Colegio de Abogados de Lomas de Zamora","Colegio profesional","consultas@calz.org","@calzlomas","Lomas de Zamora","Abogacía"],
+["CASI - Colegio de Abogados de San Isidro","Colegio profesional","recepcion@casi.com.ar","@colegioabogados_sanisidro","San Isidro","Abogacía"],
+["CAMDP - Colegio de Abogados de Mar del Plata","Colegio profesional","","@colegio.abogados.mdp","Mar del Plata","Abogacía"],
+["CABB - Colegio de Abogados de Bahía Blanca","Colegio profesional","cabb@cabb.org.ar","@colegioabb","Bahía Blanca","Abogacía"],
+["CADJJ - Colegio de Abogados de Junín","Colegio profesional","recepcion@cadjj.org.ar","@colegioabogadosjunin","Junín","Abogacía"],
+["Colegio de Abogados de Mercedes","Colegio profesional","gerente@camercedes.org.ar","@cadjmercedes","Mercedes","Abogacía"],
+["Colegio de Psicólogos de la Provincia - Consejo Superior","Colegio profesional","consejosuperior@colpsiba.org.ar","@colpsiba","Provincia","Psicología (peritos)"],
+["CPCEPBA - Consejo Profesional de Ciencias Económicas","Colegio profesional","","@cpcebuenosaires","Provincia","Contadores, Administración (detectives)"],
+["CPCIBA - Consejo Profesional de Ciencias Informáticas","Colegio profesional","info@cpciba.org.ar","@cpcibaconsejo","Provincia","Informática (peritos y detectives)"],
+["Colegio de Médicos de la Provincia - Consejo Superior","Colegio profesional","supmed@gmail.com","@colmedpba","Provincia (10 distritos)","Medicina, Ginecología (peritos)"],
+["Colegio de Técnicos de la Provincia","Colegio profesional","info@tecnicos.org.ar","@colegiotecnicosbsas","Provincia","Técnicos (revisar qué especialidades matricula)"]
+].map(r => ({institucion:r[0],tipo:r[1],mail:r[2],instagram:r[3],zona:r[4],perfiles:r[5]}));
+
+/* ===== Estado ===== */
+let contactos = [];
+let tipoActivo = "Todos";
+const $ = s => document.querySelector(s);
+
+/* ===== Utilidades ===== */
+const norm = s => (s||"").toString().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+const esc = s => (s||"").toString().replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function limpiarIg(v){
+  v = (v||"").trim();
+  if(!v) return "";
+  const m = v.match(/instagram\.com\/([A-Za-z0-9._]+)/i);
+  if(m) v = m[1];
+  v = v.replace(/^@+/,"").replace(/[/?#].*$/,"").trim();
+  return v ? "@"+v : "";
+}
+const mailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+function iniciales(n){
+  const base = (n||"").split(/\s[-·]\s/)[0].trim();
+  if(!/\s/.test(base) && base.length<=8) return base.slice(0,2).toUpperCase();
+  const p = base.split(/\s+/).filter(w=>w.length>2 || /^[A-Z]/.test(w));
+  return ((p[0]||"?")[0] + ((p[1]||"")[0]||"")).toUpperCase();
+}
+function claseTipo(t){
+  const n = norm(t);
+  if(n.startsWith("univ")) return "t-u";
+  if(n.startsWith("bolsa")) return "t-b";
+  if(n.startsWith("colegio")) return "t-c";
+  return "";
+}
+function toast(msg, err){
+  const t = $("#toast");
+  t.textContent = msg; t.className = err ? "show err" : "show";
+  clearTimeout(t._h); t._h = setTimeout(()=>t.className = err ? "err" : "", 2200);
+}
+async function copiar(texto){
+  try{ await navigator.clipboard.writeText(texto); return true; }
+  catch(e){
+    const ta = document.createElement("textarea");
+    ta.value = texto; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try{ ok = document.execCommand("copy"); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+function marcarCopiado(btn, texto){
+  const original = btn.dataset.label || btn.textContent;
+  btn.dataset.label = original;
+  btn.classList.add("ok"); btn.textContent = "✓ " + texto;
+  clearTimeout(btn._h); btn._h = setTimeout(()=>{btn.classList.remove("ok"); btn.textContent = original;}, 1600);
+}
+
+/* ===== Carga de datos ===== */
+function desdeFilas(cab, filas){
+  const idx = {};
+  cab.forEach((h,i)=>{
+    const n = norm(h);
+    if(n.startsWith("instituc")) idx.institucion=i;
+    else if(n==="tipo") idx.tipo=i;
+    else if(n.startsWith("mail")||n.startsWith("correo")) idx.mail=i;
+    else if(n.startsWith("instagram")||n==="usuario") idx.instagram=i;
+    else if(n.startsWith("zona")) idx.zona=i;
+    else if(n.startsWith("perfil")) idx.perfiles=i;
+  });
+  const g = (f,k)=> idx[k]===undefined ? "" : (f[idx[k]]||"").toString().trim();
+  return filas.map(f=>({
+    institucion:g(f,"institucion"), tipo:g(f,"tipo"), mail:g(f,"mail"),
+    instagram:limpiarIg(g(f,"instagram")), zona:g(f,"zona"), perfiles:g(f,"perfiles")
+  })).filter(c=>c.institucion);
+}
+function parseCSV(txt){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<txt.length;i++){
+    const c=txt[i];
+    if(q){ if(c=='"'){ if(txt[i+1]=='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else if(c=='"') q=true;
+    else if(c==','){ row.push(cur); cur=""; }
+    else if(c=='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
+    else if(c!='\r') cur+=c;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+async function cargar(){
+  setEstado("Cargando contactos…", false);
+  try{
+    let lista;
+    if(SCRIPT_URL){
+      const r = await fetch(SCRIPT_URL + "?t=" + Date.now());
+      const j = await r.json();
+      if(!j.ok) throw new Error(j.error||"Respuesta inválida");
+      lista = desdeFilas(j.cabecera, j.filas);
+    }else{
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
+      const r = await fetch(url);
+      if(!r.ok) throw new Error("Sin acceso");
+      const filas = parseCSV(await r.text());
+      lista = desdeFilas(filas[0]||[], filas.slice(1));
+    }
+    if(!lista.length) throw new Error("Planilla vacía");
+    contactos = lista;
+    const h = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+    setEstado(`Sincronizado con la planilla a las ${h} · ${lista.length} contactos`, false);
+  }catch(e){
+    if(!contactos.length) contactos = RESPALDO.slice();
+    setEstado("No se pudo leer la planilla. Se muestra la lista guardada, que puede estar desactualizada.", true);
+  }
+  render();
+}
+function setEstado(txt, aviso){
+  $("#estado").className = "estado" + (aviso ? " aviso" : "");
+  $("#estadoTxt").innerHTML = '<span class="punto" aria-hidden="true"></span>' + esc(txt) + ' · <button class="link" type="button" id="btnRecargar">Actualizar</button>';
+  $("#btnRecargar").onclick = cargar;
+}
+
+/* ===== Render ===== */
+function tiposPresentes(){
+  const s = new Set(TIPOS_BASE);
+  contactos.forEach(c=>c.tipo && s.add(c.tipo));
+  return [...s];
+}
+function visibles(){
+  const q = norm($("#q").value);
+  const palabras = q.split(/\s+/).filter(Boolean);
+  return contactos.filter(c=>{
+    if(tipoActivo!=="Todos" && c.tipo!==tipoActivo) return false;
+    if(!palabras.length) return true;
+    const h = norm([c.institucion,c.tipo,c.mail,c.instagram,c.zona,c.perfiles].join(" "));
+    return palabras.every(p=>h.includes(p));
+  });
+}
+function renderTabs(){
+  const tipos = ["Todos", ...tiposPresentes()];
+  const nombres = {"Todos":"Todos","Universidad":"Universidades","Bolsa de trabajo":"Bolsas de trabajo","Colegio profesional":"Colegios profesionales"};
+  $("#tabs").style.gridTemplateColumns = window.innerWidth>720 ? `repeat(${tipos.length},1fr)` : "";
+  $("#tabs").innerHTML = tipos.map(t=>{
+    const n = t==="Todos" ? contactos.length : contactos.filter(c=>c.tipo===t).length;
+    return `<button type="button" class="tab" data-tipo="${esc(t)}" aria-pressed="${t===tipoActivo}">${esc(nombres[t]||t)} <span class="n">${n}</span></button>`;
+  }).join("");
+  $("#tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tipoActivo=b.dataset.tipo; render();});
+}
+function renderBloque(v){
+  const igs = [...new Set(v.map(c=>c.instagram).filter(Boolean))];
+  const mails = [...new Set(v.map(c=>c.mail).filter(Boolean))];
+  const box = $("#accionesBloque");
+  let html = "";
+  if(igs.length<=TOPE_IG){
+    if(igs.length) html += `<button type="button" class="btn primario" data-ig="0">Copiar ${igs.length} ${igs.length===1?"usuario":"usuarios"}</button>`;
+  }else{
+    for(let i=0;i<igs.length;i+=TOPE_IG){
+      const fin = Math.min(i+TOPE_IG, igs.length);
+      html += `<button type="button" class="btn primario" data-ig="${i}">Copiar usuarios ${i+1} a ${fin}</button>`;
+    }
+  }
+  if(mails.length) html += `<button type="button" class="btn" id="btnMails">Copiar ${mails.length} ${mails.length===1?"correo":"correos"}</button>`;
+  if(!igs.length && !mails.length) html = `<span class="perf">No hay usuarios ni correos para copiar con esta búsqueda.</span>`;
+  box.innerHTML = html;
+  $("#bloqueTxt").textContent = igs.length>TOPE_IG
+    ? `Instagram permite hasta ${TOPE_IG} menciones por publicación, por eso los usuarios se copian en grupos. Los correos se copian todos juntos, separados por coma.`
+    : "Copia los contactos que se ven en la lista, según la búsqueda y el tipo elegido. Los correos van separados por coma.";
+  box.querySelectorAll("[data-ig]").forEach(b=>b.onclick=async()=>{
+    if(!igs.length){ toast("No hay usuarios para copiar", true); return; }
+    const i = +b.dataset.ig, grupo = igs.slice(i, i+TOPE_IG);
+    if(await copiar(grupo.join(" "))){ marcarCopiado(b,"Copiados"); toast(`${grupo.length} usuarios copiados`); }
+    else toast("No se pudo copiar. Probá de nuevo.", true);
+  });
+  if($("#btnMails")) $("#btnMails").onclick = async e=>{
+    if(!mails.length){ toast("No hay correos para copiar", true); return; }
+    if(await copiar(mails.join(", "))){ marcarCopiado(e.currentTarget,"Copiados"); toast(`${mails.length} correos copiados`); }
+    else toast("No se pudo copiar. Probá de nuevo.", true);
+  };
+}
+function render(){
+  renderTabs();
+  const v = visibles();
+  renderBloque(v);
+  const total = tipoActivo==="Todos" ? contactos.length : contactos.filter(c=>c.tipo===tipoActivo).length;
+  $("#conteo").textContent = v.length===total ? `${v.length} ${v.length===1?"contacto":"contactos"}` : `${v.length} de ${total} contactos`;
+  if(!v.length){
+    $("#lista").innerHTML = `<li class="vacio-msg">No hay contactos que coincidan con la búsqueda. Probá con otra palabra o elegí “Todos”.</li>`;
+    return;
+  }
+  $("#lista").innerHTML = v.map((c,i)=>{
+    const ig = c.instagram, user = ig.replace(/^@/,"");
+    return `<li class="card">
+      <div class="top">
+        <div class="ini" aria-hidden="true">${esc(iniciales(c.institucion))}</div>
+        <div>
+          <h3>${esc(c.institucion)}</h3>
+          <div class="meta">
+            ${c.tipo?`<span class="pill ${claseTipo(c.tipo)}">${esc(c.tipo)}</span>`:""}
+            ${c.zona?`<span class="pill">${esc(c.zona)}</span>`:""}
+          </div>
+        </div>
+      </div>
+      ${c.perfiles?`<p class="perf"><span class="sr">Perfiles: </span>${esc(c.perfiles)}</p>`:""}
+      <div class="dato">
+        <span class="v ${ig?"":"vacio"}">${ig?`<a href="https://www.instagram.com/${esc(user)}/" target="_blank" rel="noopener">${esc(ig)}</a>`:"Sin Instagram"}</span>
+        ${ig?`<button type="button" class="btn" data-copy="${esc(ig)}" data-ok="Copiado" aria-label="Copiar usuario ${esc(ig)}">Copiar usuario</button>`:""}
+      </div>
+      <div class="dato">
+        <span class="v ${c.mail?"":"vacio"}">${c.mail?`<a href="mailto:${esc(c.mail)}">${esc(c.mail)}</a>`:"Sin correo"}</span>
+        ${c.mail?`<button type="button" class="btn" data-copy="${esc(c.mail)}" data-ok="Copiado" aria-label="Copiar correo ${esc(c.mail)}">Copiar correo</button>`:""}
+      </div>
+    </li>`;
+  }).join("");
+  $("#lista").querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{
+    const t = b.dataset.copy;
+    if(await copiar(t)){ marcarCopiado(b,"Copiado"); toast(t.includes("@")&&!t.startsWith("@") ? "Correo copiado" : "Usuario copiado"); }
+    else toast("No se pudo copiar. Probá de nuevo.", true);
+  });
+}
+
+/* ===== Agregar contacto ===== */
+const dlg = $("#dlg");
+function abrir(){
+  $("#form").reset();
+  ["eInst","eMail","eGeneral"].forEach(id=>$("#"+id).hidden=true);
+  $("#eIg").className="ayuda"; $("#eIg").textContent="Podés pegar el link del perfil.";
+  const tipos = tiposPresentes();
+  $("#fTipo").innerHTML = tipos.map(t=>`<option>${esc(t)}</option>`).join("") + `<option value="__otro">Otro tipo…</option>`;
+  if(tipoActivo!=="Todos") $("#fTipo").value = tipoActivo;
+  $("#wOtro").hidden = true;
+  try{ $("#fClave").value = localStorage.getItem("difusion_clave")||""; }catch(_){}
+  if(!SCRIPT_URL){
+    $("#eGeneral").textContent = "Para guardar contactos falta conectar la planilla (SCRIPT_URL en el código).";
+    $("#eGeneral").hidden = false;
+  }
+  dlg.showModal(); $("#fInst").focus();
+}
+$("#btnNuevo").onclick = abrir;
+$("#btnCerrar").onclick = $("#btnCancelar").onclick = ()=>dlg.close();
+dlg.addEventListener("click", e=>{ if(e.target===dlg) dlg.close(); });
+$("#fTipo").onchange = ()=>{ $("#wOtro").hidden = $("#fTipo").value!=="__otro"; if(!$("#wOtro").hidden) $("#fOtro").focus(); };
+$("#fIg").addEventListener("blur", ()=>{ $("#fIg").value = limpiarIg($("#fIg").value); });
+
+$("#form").onsubmit = async e=>{
+  e.preventDefault();
+  const inst = $("#fInst").value.trim();
+  const tipo = $("#fTipo").value==="__otro" ? $("#fOtro").value.trim() : $("#fTipo").value;
+  const ig = limpiarIg($("#fIg").value);
+  const mail = $("#fMail").value.trim();
+  const clave = $("#fClave").value;
+  let ok = true;
+  const eI=$("#eInst"), eM=$("#eMail"), eG=$("#eGeneral"), eIg=$("#eIg");
+  eI.hidden = eM.hidden = eG.hidden = true; eIg.className="ayuda"; eIg.textContent="Podés pegar el link del perfil.";
+  if(!inst){ eI.textContent="Escribí el nombre de la institución."; eI.hidden=false; ok=false; }
+  if(mail && !mailOk(mail)){ eM.textContent="El correo no parece válido. Revisá que tenga @ y dominio."; eM.hidden=false; ok=false; }
+  if(!tipo){ eG.textContent="Elegí un tipo o escribí uno nuevo."; eG.hidden=false; ok=false; }
+  if(!ig && !mail){ eG.textContent="Cargá al menos el Instagram o el correo."; eG.hidden=false; ok=false; }
+  const dupe = contactos.find(c=>(ig && norm(c.instagram)===norm(ig)) || (mail && norm(c.mail)===norm(mail)));
+  if(dupe){ eG.textContent=`Ya existe un contacto con ese dato: ${dupe.institucion}.`; eG.hidden=false; ok=false; }
+  if(!SCRIPT_URL){ eG.textContent="Para guardar contactos falta conectar la planilla (SCRIPT_URL en el código)."; eG.hidden=false; ok=false; }
+  if(!ok){ (eI.hidden ? (eM.hidden ? $("#fIg") : $("#fMail")) : $("#fInst")).focus(); return; }
+
+  const nuevo = {institucion:inst, tipo, mail, instagram:ig, zona:$("#fZona").value.trim(), perfiles:$("#fPerf").value.trim()};
+  const btn = $("#btnGuardar"); btn.disabled = true; btn.textContent = "Guardando…";
+  try{
+    const r = await fetch(SCRIPT_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({accion:"agregar", clave, contacto:nuevo})});
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||"No se pudo guardar");
+    try{ localStorage.setItem("difusion_clave", clave); }catch(_){}
+    contactos.push(nuevo);
+    dlg.close();
+    tipoActivo = "Todos"; $("#q").value = "";
+    render();
+    toast("Contacto agregado a la planilla");
+  }catch(err){
+    eG.textContent = (err.message==="Clave incorrecta")
+      ? "La clave de carga no es correcta. Pedila a Comunicación Digital."
+      : "No se pudo guardar en la planilla. Revisá la conexión y probá de nuevo.";
+    eG.hidden = false;
+  }finally{
+    btn.disabled = false; btn.textContent = "Guardar contacto";
+  }
+};
+
+/* ===== Búsqueda y atajos ===== */
+$("#q").addEventListener("input", render);
+document.addEventListener("keydown", e=>{
+  if(e.key==="/" && document.activeElement.tagName!=="INPUT" && !dlg.open){ e.preventDefault(); $("#q").focus(); }
+});
+window.addEventListener("resize", ()=>renderTabs());
+
+cargar();
+</script>
+</body>
+</html>
