@@ -427,9 +427,10 @@ function renderBloque(v){
     if(await copiar(grupo.join(" "))){ marcarCopiado(b,"Copiados"); toast(`${grupo.length} usuarios copiados`); }
     else toast("No se pudo copiar. Probá de nuevo.", true);
   });
-  if($("#btnMails")) $("#btnMails").onclick = async e=>{
+  const bm = $("#btnMails");
+  if(bm) bm.onclick = async ()=>{
     if(!mails.length){ toast("No hay correos para copiar", true); return; }
-    if(await copiar(mails.join(", "))){ marcarCopiado(e.currentTarget,"Copiados"); toast(`${mails.length} correos copiados`); }
+    if(await copiar(mails.join(", "))){ marcarCopiado(bm,"Copiados"); toast(`${mails.length} ${mails.length===1?"correo copiado":"correos copiados"}`); }
     else toast("No se pudo copiar. Probá de nuevo.", true);
   };
 }
