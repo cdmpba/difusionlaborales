@@ -193,7 +193,7 @@
       </div>
       <div>
         <label for="fMail">Correo</label>
-        <input type="email" id="fMail" name="mail" autocomplete="off" placeholder="nombre@dominio.org.ar">
+        <input type="text" inputmode="email" id="fMail" name="mail" autocomplete="off" placeholder="nombre@dominio.org.ar (si hay varios, separalos con coma)">
         <div class="ayuda err" id="eMail" hidden></div>
       </div>
       <div>
@@ -221,7 +221,7 @@
 <script>
 /* ===== Configuración ===== */
 // Pegá acá la URL de la aplicación web de Apps Script (termina en /exec).
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbm9Dygj7D_A7RHYE4mdNEupVxDpeXQOZHvzKZnYyPuQyIAYR4dqe8k9GaSnlAlM4k/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxKdYri3JBvKFaJz8w3pmhYiDLRpnu8rT2EhoV06l_v2mKg9ZoxS7nFHZF6zhcyZtZ/exec";
 // Planilla de respaldo para lectura si no hay SCRIPT_URL (debe estar compartida como "Cualquier persona con el enlace").
 const SHEET_ID = "1ZUxtYuhoqupnnnF7Mrh2gxcjfcfznX2le4idZa1ZUuI";
 const SHEET_NAME = "Contactos";
@@ -278,6 +278,8 @@ function limpiarIg(v){
   return v ? "@"+v : "";
 }
 const mailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+// Una celda puede tener varios correos separados por coma, punto y coma o espacio.
+const listaMails = v => [...new Set(String(v||"").split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean))];
 function iniciales(n){
   const base = (n||"").split(/\s[-·]\s/)[0].trim();
   if(!/\s/.test(base) && base.length<=8) return base.slice(0,2).toUpperCase();
@@ -404,7 +406,7 @@ function renderTabs(){
 }
 function renderBloque(v){
   const igs = [...new Set(v.map(c=>c.instagram).filter(Boolean))];
-  const mails = [...new Set(v.map(c=>c.mail).filter(Boolean))];
+  const mails = [...new Set(v.flatMap(c=>listaMails(c.mail).map(m=>m.toLowerCase())))];
   const box = $("#accionesBloque");
   let html = "";
   if(igs.length<=TOPE_IG){
@@ -462,10 +464,10 @@ function render(){
         <span class="v ${ig?"":"vacio"}">${ig?`<a href="https://www.instagram.com/${esc(user)}/" target="_blank" rel="noopener">${esc(ig)}</a>`:"Sin Instagram"}</span>
         ${ig?`<button type="button" class="btn" data-copy="${esc(ig)}" data-ok="Copiado" aria-label="Copiar usuario ${esc(ig)}">Copiar usuario</button>`:""}
       </div>
-      <div class="dato">
-        <span class="v ${c.mail?"":"vacio"}">${c.mail?`<a href="mailto:${esc(c.mail)}">${esc(c.mail)}</a>`:"Sin correo"}</span>
-        ${c.mail?`<button type="button" class="btn" data-copy="${esc(c.mail)}" data-ok="Copiado" aria-label="Copiar correo ${esc(c.mail)}">Copiar correo</button>`:""}
-      </div>
+      ${listaMails(c.mail).length ? listaMails(c.mail).map(m=>`<div class="dato">
+        <span class="v"><a href="mailto:${esc(m)}">${esc(m)}</a></span>
+        <button type="button" class="btn" data-copy="${esc(m)}" data-ok="Copiado" aria-label="Copiar correo ${esc(m)}">Copiar correo</button>
+      </div>`).join("") : `<div class="dato"><span class="v vacio">Sin correo</span></div>`}
     </li>`;
   }).join("");
   $("#lista").querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{
@@ -503,16 +505,18 @@ $("#form").onsubmit = async e=>{
   const inst = $("#fInst").value.trim();
   const tipo = $("#fTipo").value==="__otro" ? $("#fOtro").value.trim() : $("#fTipo").value;
   const ig = limpiarIg($("#fIg").value);
-  const mail = $("#fMail").value.trim();
+  const mailsForm = listaMails($("#fMail").value);
+  const mail = mailsForm.join(", ");
   const clave = $("#fClave").value;
   let ok = true;
   const eI=$("#eInst"), eM=$("#eMail"), eG=$("#eGeneral"), eIg=$("#eIg");
   eI.hidden = eM.hidden = eG.hidden = true; eIg.className="ayuda"; eIg.textContent="Podés pegar el link del perfil.";
   if(!inst){ eI.textContent="Escribí el nombre de la institución."; eI.hidden=false; ok=false; }
-  if(mail && !mailOk(mail)){ eM.textContent="El correo no parece válido. Revisá que tenga @ y dominio."; eM.hidden=false; ok=false; }
+  const malos = mailsForm.filter(m=>!mailOk(m));
+  if(malos.length){ eM.textContent=`${malos.length===1?"Este correo no parece válido":"Estos correos no parecen válidos"}: ${malos.join(", ")}. Revisá que tengan @ y dominio.`; eM.hidden=false; ok=false; }
   if(!tipo){ eG.textContent="Elegí un tipo o escribí uno nuevo."; eG.hidden=false; ok=false; }
   if(!ig && !mail){ eG.textContent="Cargá al menos el Instagram o el correo."; eG.hidden=false; ok=false; }
-  const dupe = contactos.find(c=>(ig && norm(c.instagram)===norm(ig)) || (mail && norm(c.mail)===norm(mail)));
+  const dupe = contactos.find(c=>(ig && norm(c.instagram)===norm(ig)) || listaMails(c.mail).some(m=>mailsForm.some(n=>norm(m)===norm(n))));
   if(dupe){ eG.textContent=`Ya existe un contacto con ese dato: ${dupe.institucion}.`; eG.hidden=false; ok=false; }
   if(!SCRIPT_URL){ eG.textContent="Para guardar contactos falta conectar la planilla (SCRIPT_URL en el código)."; eG.hidden=false; ok=false; }
   if(!ok){ (eI.hidden ? (eM.hidden ? $("#fIg") : $("#fMail")) : $("#fInst")).focus(); return; }
