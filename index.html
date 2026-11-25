@@ -63,6 +63,13 @@
   .bloque h2{font-size:16px;margin:0 0 4px}
   .bloque p{margin:0 0 12px;font-size:13px;color:var(--texto2)}
   .acciones{display:flex;flex-wrap:wrap;gap:8px}
+  .fila-bloque{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 0;border-top:1px solid var(--borde)}
+  .fila-bloque:first-child{border-top:0;padding-top:0}
+  .fila-bloque .etq{flex:0 0 260px;font-size:14px;font-weight:600;color:var(--texto)}
+  .fila-bloque .etq .sub{font-weight:400;color:var(--texto2);font-size:13px}
+  .fila-bloque .acciones{flex:1}
+  .btn.hecho{background:#E8F5EE;border-color:#9BD3B4;color:#1E6B45}
+  @media (max-width:600px){.fila-bloque .etq{flex-basis:100%}}
 
   .conteo{font-size:13px;color:var(--texto2);margin:16px 0 8px}
 
@@ -152,7 +159,7 @@
   <section class="bloque" aria-labelledby="tBloque">
     <h2 id="tBloque">Copiar en bloque</h2>
     <p id="bloqueTxt">Copia los contactos que se ven en la lista, según la búsqueda y el tipo elegido.</p>
-    <div class="acciones" id="accionesBloque"></div>
+    <div id="accionesBloque"></div>
   </section>
 
   <p class="conteo" id="conteo" aria-live="polite"></p>
@@ -227,6 +234,9 @@ const SHEET_ID = "1ZUxtYuhoqupnnnF7Mrh2gxcjfcfznX2le4idZa1ZUuI";
 const SHEET_NAME = "Contactos";
 const TIPOS_BASE = ["Universidad", "Bolsa de trabajo", "Colegio profesional"];
 const TOPE_IG = 20; // Instagram permite hasta 20 menciones por publicación.
+const TOPE_MAIL = 15; // Máximo de destinatarios por envío.
+const NOMBRES_TIPO = {"Todos":"Todos","Universidad":"Universidades","Bolsa de trabajo":"Bolsas de trabajo","Colegio profesional":"Colegios profesionales","Organismo público":"Organismos públicos","Referente":"Referentes","Facultad":"Facultades"};
+const bloquesCopiados = new Set(); // recuerda qué bloques de correo ya se copiaron en esta sesión
 
 /* Lista guardada: se muestra si la planilla no responde. */
 const RESPALDO = [
@@ -396,7 +406,7 @@ function visibles(){
 }
 function renderTabs(){
   const tipos = ["Todos", ...tiposPresentes()];
-  const nombres = {"Todos":"Todos","Universidad":"Universidades","Bolsa de trabajo":"Bolsas de trabajo","Colegio profesional":"Colegios profesionales"};
+  const nombres = NOMBRES_TIPO;
   $("#tabs").style.gridTemplateColumns = window.innerWidth>720 ? `repeat(${tipos.length},1fr)` : "";
   $("#tabs").innerHTML = tipos.map(t=>{
     const n = t==="Todos" ? contactos.length : contactos.filter(c=>c.tipo===t).length;
@@ -404,37 +414,73 @@ function renderTabs(){
   }).join("");
   $("#tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tipoActivo=b.dataset.tipo; render();});
 }
+// Arma bloques de hasta TOPE_MAIL correos por categoría, sin partir los correos de una misma institución.
+function bloquesDeMails(v){
+  const grupos = [];
+  const orden = [...tiposPresentes(), ""];
+  orden.forEach(tipo=>{
+    const vistos = new Set(), bloques = [];
+    let actual = {mails:[], inst:[]};
+    v.filter(c=>(c.tipo||"")===tipo).forEach(c=>{
+      const propios = listaMails(c.mail).map(m=>m.toLowerCase()).filter(m=>!vistos.has(m));
+      if(!propios.length) return;
+      propios.forEach(m=>vistos.add(m));
+      if(actual.mails.length && actual.mails.length + propios.length > TOPE_MAIL){ bloques.push(actual); actual = {mails:[], inst:[]}; }
+      for(let k=0;k<propios.length;k+=TOPE_MAIL){ // una sola institución con más de 15 correos
+        const parte = propios.slice(k, k+TOPE_MAIL);
+        if(actual.mails.length + parte.length > TOPE_MAIL){ bloques.push(actual); actual = {mails:[], inst:[]}; }
+        actual.mails.push(...parte); actual.inst.push(c.institucion);
+      }
+    });
+    if(actual.mails.length) bloques.push(actual);
+    const total = bloques.reduce((n,b)=>n+b.mails.length,0);
+    if(bloques.length) grupos.push({tipo: tipo||"Sin tipo", bloques, total});
+  });
+  return grupos;
+}
 function renderBloque(v){
   const igs = [...new Set(v.map(c=>c.instagram).filter(Boolean))];
-  const mails = [...new Set(v.flatMap(c=>listaMails(c.mail).map(m=>m.toLowerCase())))];
+  const grupos = bloquesDeMails(v);
   const box = $("#accionesBloque");
   let html = "";
-  if(igs.length<=TOPE_IG){
-    if(igs.length) html += `<button type="button" class="btn primario" data-ig="0">Copiar ${igs.length} ${igs.length===1?"usuario":"usuarios"}</button>`;
-  }else{
+
+  if(igs.length){
+    html += `<div class="fila-bloque"><span class="etq">Instagram</span><div class="acciones">`;
     for(let i=0;i<igs.length;i+=TOPE_IG){
       const fin = Math.min(i+TOPE_IG, igs.length);
-      html += `<button type="button" class="btn primario" data-ig="${i}">Copiar usuarios ${i+1} a ${fin}</button>`;
+      const txt = igs.length<=TOPE_IG ? `Copiar ${igs.length} ${igs.length===1?"usuario":"usuarios"}` : `Usuarios ${i+1} a ${fin}`;
+      html += `<button type="button" class="btn primario" data-ig="${i}">${txt}</button>`;
     }
+    html += `</div></div>`;
   }
-  if(mails.length) html += `<button type="button" class="btn" id="btnMails">Copiar ${mails.length} ${mails.length===1?"correo":"correos"}</button>`;
-  if(!igs.length && !mails.length) html = `<span class="perf">No hay usuarios ni correos para copiar con esta búsqueda.</span>`;
+  grupos.forEach((g,gi)=>{
+    const nombre = NOMBRES_TIPO[g.tipo] || g.tipo;
+    html += `<div class="fila-bloque"><span class="etq">${esc(nombre)} <span class="sub">· ${g.total} ${g.total===1?"correo":"correos"}</span></span><div class="acciones">`;
+    g.bloques.forEach((b,bi)=>{
+      const clave = b.mails.join(",");
+      const hecho = bloquesCopiados.has(clave);
+      const titulo = b.inst.join(" · ");
+      html += `<button type="button" class="btn ${hecho?"hecho":""}" data-g="${gi}" data-b="${bi}" title="${esc(titulo)}" aria-label="Copiar bloque ${bi+1} de ${esc(nombre)}: ${b.mails.length} correos${hecho?", ya copiado":""}">${hecho?"✓ ":""}Bloque ${bi+1} · ${b.mails.length}</button>`;
+    });
+    html += `</div></div>`;
+  });
+  if(!igs.length && !grupos.length) html = `<span class="perf">No hay usuarios ni correos para copiar con esta búsqueda.</span>`;
   box.innerHTML = html;
-  $("#bloqueTxt").textContent = igs.length>TOPE_IG
-    ? `Instagram permite hasta ${TOPE_IG} menciones por publicación, por eso los usuarios se copian en grupos. Los correos se copian todos juntos, separados por coma.`
-    : "Copia los contactos que se ven en la lista, según la búsqueda y el tipo elegido. Los correos van separados por coma.";
+  $("#bloqueTxt").textContent = `Los correos se agrupan por categoría en bloques de hasta ${TOPE_MAIL}, que es el máximo por envío. Los correos de una misma institución quedan siempre en el mismo bloque. Los bloques copiados quedan marcados con ✓ hasta que recargues la página. Instagram permite hasta ${TOPE_IG} menciones por publicación.`;
+
   box.querySelectorAll("[data-ig]").forEach(b=>b.onclick=async()=>{
-    if(!igs.length){ toast("No hay usuarios para copiar", true); return; }
     const i = +b.dataset.ig, grupo = igs.slice(i, i+TOPE_IG);
     if(await copiar(grupo.join(" "))){ marcarCopiado(b,"Copiados"); toast(`${grupo.length} usuarios copiados`); }
     else toast("No se pudo copiar. Probá de nuevo.", true);
   });
-  const bm = $("#btnMails");
-  if(bm) bm.onclick = async ()=>{
-    if(!mails.length){ toast("No hay correos para copiar", true); return; }
-    if(await copiar(mails.join(", "))){ marcarCopiado(bm,"Copiados"); toast(`${mails.length} ${mails.length===1?"correo copiado":"correos copiados"}`); }
-    else toast("No se pudo copiar. Probá de nuevo.", true);
-  };
+  box.querySelectorAll("[data-g]").forEach(b=>b.onclick=async()=>{
+    const g = grupos[+b.dataset.g], bl = g.bloques[+b.dataset.b];
+    if(await copiar(bl.mails.join(", "))){
+      bloquesCopiados.add(bl.mails.join(","));
+      b.classList.add("hecho"); b.textContent = `✓ Bloque ${+b.dataset.b+1} · ${bl.mails.length}`;
+      toast(`${NOMBRES_TIPO[g.tipo]||g.tipo}, bloque ${+b.dataset.b+1}: ${bl.mails.length} correos copiados`);
+    } else toast("No se pudo copiar. Probá de nuevo.", true);
+  });
 }
 function render(){
   renderTabs();
